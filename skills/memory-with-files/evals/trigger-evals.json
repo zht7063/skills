@@ -1,0 +1,82 @@
+[
+  {
+    "query": "Set up project-local cross-session memory in this repository. Track shared memory in Git, keep private notes local, and make sure new Codex or Pi sessions automatically load the handoff.",
+    "should_trigger": true
+  },
+  {
+    "query": "We're continuing the payments refactor in a fresh session. This repo already has .mwf; check what the last agent completed and whether there are Stripe migration decisions relevant to src/billing/ before changing code.",
+    "should_trigger": true
+  },
+  {
+    "query": "For this project, always run the schema compatibility check before applying database migrations. I have had to remind agents of this several times, so preserve it for future sessions.",
+    "should_trigger": true
+  },
+  {
+    "query": "We finally converted the embedded-object DOCX after Pandoc and two custom scripts failed. Record why those attempts failed, the LibreOffice command that worked, its validation evidence, and where each approach is still appropriate.",
+    "should_trigger": true
+  },
+  {
+    "query": "Finish this milestone and prepare a concise handoff for a new task tomorrow. Include the unresolved cache invalidation blocker and the next concrete action, but do not copy the whole git log.",
+    "should_trigger": true
+  },
+  {
+    "query": "There are three unchecked entries in .mwf/inbox.md. Classify them, redact anything credential-like, turn unclear long-term guidance into candidates, and leave the conflicts for my decision.",
+    "should_trigger": true
+  },
+  {
+    "query": "PREF-20260820-004 says to use pnpm, but the root AGENTS.md now requires npm. Work out the authority conflict, ask me if needed, and update the stale memory so this doesn't recur.",
+    "should_trigger": true
+  },
+  {
+    "query": "Please forget the project memory entry about the retired internal endpoint. Show me the exact matching IDs first and permanently remove only the one I authorize.",
+    "should_trigger": true
+  },
+  {
+    "query": "Our .mwf index is getting noisy after several branches merged. Find duplicate incidents, preserve unique scope and verification evidence, archive confirmed duplicates, and check the structure afterward.",
+    "should_trigger": true
+  },
+  {
+    "query": "Run a health check on this project's file memory. I suspect a hand-edited candidate has an invalid type and that a token may have been pasted into the inbox.",
+    "should_trigger": true
+  },
+  {
+    "query": "For this run only, skip the full integration suite because I am on a slow laptop. Just run the focused parser test and do not make this a permanent project rule.",
+    "should_trigger": false
+  },
+  {
+    "query": "Summarize the last five git commits and tell me which files changed most often. I don't need any persistent notes or handoff updates.",
+    "should_trigger": false
+  },
+  {
+    "query": "Fix the obvious typo in src/banner.ts, run its unit test, and stop. This is a one-line routine change with no reusable workaround.",
+    "should_trigger": false
+  },
+  {
+    "query": "Create task_plan.md, findings.md, and progress.md so this long research task survives context compaction inside the current session.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain how transformer key-value memory works and compare it with recurrent neural networks. This is a conceptual question, not a request to modify a project.",
+    "should_trigger": false
+  },
+  {
+    "query": "Help me choose a password manager that supports passkeys and family sharing. Please compare current prices and security audits.",
+    "should_trigger": false
+  },
+  {
+    "query": "Remember that my favorite color is green across every future conversation and every repository I open.",
+    "should_trigger": false
+  },
+  {
+    "query": "Inspect why Chrome localStorage is cleared after logout in our web app. The word memory appears in the bug report, but this is normal application-state debugging.",
+    "should_trigger": false
+  },
+  {
+    "query": "This file is currently being edited by another agent, so don't touch it during this coordination window. Continue with the unrelated CSS task.",
+    "should_trigger": false
+  },
+  {
+    "query": "The build failed once because I mistyped the command. Run the corrected npm test command; there is no need to preserve this trivial mistake for later sessions.",
+    "should_trigger": false
+  }
+]

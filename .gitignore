@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Python and local runtimes
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Agent-local planning state
+.planning/
+
+# Generated evaluation and packaging artifacts
+skills/*-workspace/
+dist/
+*.skill
+
+# Editor and temporary files
+*.swp
+*~

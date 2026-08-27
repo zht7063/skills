@@ -1,0 +1,49 @@
+{
+  "skill_name": "memory-with-files",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Initialize project-local cross-session memory for this repository in Git track mode, then repeat initialization to verify it is idempotent. Preserve the existing AGENTS.md content. The durable project rule is: the auxiliary GT test module stays enabled for experiments but must not be mentioned in formal documentation unless I explicitly request it. For this task only, do not run the full test suite. Record only what should persist and leave a concise handoff for the next session.",
+      "expected_output": "An idempotently initialized .mwf tree, managed AGENTS and protocol blocks, scoped stable preference, and concise handoff without persisting the temporary test restriction. A fallback without the skill must not invent a substitute schema.",
+      "files": ["fixtures/init-project"],
+      "expectations": [
+        "The original AGENTS.md rules remain and repeated initialization leaves exactly one managed memory-with-files block and one managed protocol block.",
+        "A valid .mwf config, index, handoff, inbox, protocol, record directories, and local directory are created.",
+        "A stable preference records that the enabled auxiliary GT module must be excluded from formal documentation unless explicitly requested, with GT path/component and documentation scope.",
+        "The one-time instruction to skip the full test suite is not stored as durable memory or handoff guidance.",
+        "The handoff is concise and contains a current goal or stage plus a concrete next action.",
+        "The local memory directory is Git-ignored and the resulting memory structure passes its health check.",
+        "If the full skill is unavailable, the result does not invent an alternative memory directory, record type, or status."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A new session is taking over this project. Prepare the exact approach for converting reports/legacy.docx while preserving embedded objects; do not perform the conversion yet. Use the project's existing memory so we do not repeat earlier failed attempts. Update the handoff with the recommended next action, cite the relevant memory ID, and preserve both where the workaround applies and where the previously failed tool remains acceptable.",
+      "expected_output": "The agent recalls the full incident, recommends LibreOffice headless for embedded-object DOCX, explicitly preserves Pandoc's text-only applicability and invalidation conditions, cites the incident, and updates the handoff without performing conversion.",
+      "files": ["fixtures/conversion-project"],
+      "expectations": [
+        "The result recommends LibreOffice headless for this embedded-object DOCX instead of retrying Pandoc as the converter.",
+        "The result cites memory ID INC-20260827-001.",
+        "The result and handoff state that Pandoc remains acceptable for simple text-only documents.",
+        "The result preserves the incident invalidation conditions or explicitly requires re-validation after material converter changes.",
+        "The handoff is updated with a concrete next action and INC-20260827-001.",
+        "No actual converted output is produced because the prompt requested planning only.",
+        "No unsupported memory fact or replacement incident is fabricated when project memory is absent."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Perform memory maintenance for this project. Process the pending inbox safely, handle the duplicate conversion incidents without losing unique scope or validation evidence, rebuild routing data when structural changes are made, and prepare the handoff. Do not silently choose between conflicting active preferences; ask me to resolve material ambiguity. If the full memory skill is unavailable, degrade conservatively rather than inventing schema or partially resolving semantic maintenance.",
+      "expected_output": "Sensitive text is removed; a full-skill run safely compacts confirmed duplicates, while fallback preserves and defers semantic maintenance; conflicts and candidates remain visible; active facts survive; no invalid schema is introduced.",
+      "files": ["fixtures/maintenance-project"],
+      "expectations": [
+        "Credential-like inbox content is removed from the current .mwf tree and is not copied into a managed record.",
+        "The duplicate incidents are either safely consolidated with all unique evidence and scope, or preserved unchanged with explicit deferral when full maintenance capability is unavailable.",
+        "The conflicting Pandoc preferences are not silently resolved; the result identifies the conflict and requests a user decision with both preference IDs or their exact rules.",
+        "Every non-conflicting active fact remains available in an active record or a clearly linked canonical replacement.",
+        "The inbox disposition and unresolved ambiguity are visible to the next session without inventing type candidate or status pending.",
+        "The resulting .mwf structure has no doctor structural errors; warnings may remain for deliberately unresolved candidates, duplicates, or inbox work."
+      ]
+    }
+  ]
+}
