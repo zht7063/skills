@@ -15,9 +15,12 @@
 ├── docs/
 │   └── repository-layout.md
 ├── scripts/
-│   ├── install-skill.*        # Future: install one skill into a supported agent
-│   ├── install-all.*          # Future: install all selected skills
-│   └── validate-all.*         # Future: validate every skill package
+│   ├── _skill_tools.py        # Shared dependency-free implementation
+│   ├── install-skill.py       # Install one skill into a supported agent
+│   ├── uninstall-skill.py     # Preview or remove one installed skill
+│   └── validate-all.py        # Validate every skill package
+├── tests/
+│   └── test_repository_scripts.py
 └── skills/
     ├── memory-with-files/
     │   ├── SKILL.md
@@ -43,9 +46,7 @@ Only create optional directories when a skill actually needs them. In particular
 
 ## Repository-level tooling
 
-The root `scripts/` directory is reserved for operations across packages, such as installing a selected skill, validating every skill, or packaging release artifacts. These scripts should discover packages beneath `skills/` rather than hard-code a single skill.
-
-No root scripts are created during bootstrap. Their command interface and supported agent installation targets should be designed when the first installation workflow is specified.
+The root `scripts/` directory contains operations across packages, such as installing a selected skill and validating every skill. These scripts discover packages beneath `skills/` rather than hard-code a single skill. Installation supports Codex, Pi Agent, and explicit custom target directories; detailed usage is documented in [installing-skills.md](installing-skills.md).
 
 ## Generated and local state
 

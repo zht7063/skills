@@ -19,4 +19,9 @@ See [docs/repository-layout.md](docs/repository-layout.md) for the detailed stru
 
 The first skill, [`memory-with-files`](skills/memory-with-files/SKILL.md), is implemented and has completed behavioral evaluation. It provides a portable `.mwf` project-memory protocol, managed `AGENTS.md` fallback instructions, and a standard-library CLI for initialization, scoped recall, typed candidate creation, inbox processing, health checks, duplicate detection, preservation-first compaction, migration, and explicit forgetting.
 
-Generated review workspaces remain local and ignored. Repository-wide installation and validation commands can be added under `scripts/` after the first skill package is accepted.
+Repository-level commands under `scripts/` install skills for Codex, Pi Agent,
+or a custom target, safely uninstall one exact skill, and validate all source
+packages. See [docs/installing-skills.md](docs/installing-skills.md) for command
+examples and safety behavior.
+
+Generated review workspaces remain local and ignored.
