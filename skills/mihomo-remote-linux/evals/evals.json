@@ -1,0 +1,30 @@
+{
+  "skill_name": "mihomo-remote-linux",
+  "evals": [
+    {
+      "id": "audit-local-port-proxy",
+      "prompt": "检查 SSH 主机 buildbox 上的 Mihomo 为什么 curl 直连，确认它是否已经全局代理。不要暴露 config.yaml。",
+      "expected_output": "Audits safe runtime state, distinguishes local proxy listeners from automatic routing, reports selected policy and measured egress without reading private configuration."
+    },
+    {
+      "id": "global-tun-cutover",
+      "prompt": "把 gpu-01 的默认流量固定走我手动上传的 Mihomo 配置里的新加坡节点，做好 SSH 断连回滚。",
+      "expected_output": "Requires manual config upload and explicit node confirmation, creates backup plus timed rollback, uses a separate capability-scoped TUN system unit, validates actual Singapore egress before cancelling rollback."
+    },
+    {
+      "id": "safe-update",
+      "prompt": "更新 prod-shell 的 Mihomo 到最新稳定版，保留现在的订阅配置和 systemd 管理方式。",
+      "expected_output": "Updates only binary/data, never reads or rewrites the private config, validates before restart, and avoids overlapping nohup/systemd instances."
+    },
+    {
+      "id": "install-without-config",
+      "prompt": "在新开的 arm64 主机 edge-02 上装最新稳定版 Mihomo；订阅文件稍后我自己上传。先让它跑起来。",
+      "expected_output": "Detects the architecture and installs only verified executable/data. It does not create a substitute config or start/validate a service before the user manually uploads the private config."
+    },
+    {
+      "id": "migrate-legacy-clash",
+      "prompt": "把旧 Clash 服务迁移到 Mihomo，端口仍用 7890/7891/7894，订阅别泄露。",
+      "expected_output": "Inventories existing service ownership and ports, requires a manually placed compatible config, validates Mihomo before retiring the legacy service, and avoids duplicate listeners."
+    }
+  ]
+}
