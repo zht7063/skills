@@ -15,9 +15,15 @@ The first skill will live at `skills/memory-with-files/`. Generated evaluation w
 
 See [docs/repository-layout.md](docs/repository-layout.md) for the detailed structure and conventions.
 
-## Repository status
+## Skills
 
-The first skill, [`memory-with-files`](skills/memory-with-files/SKILL.md), is implemented and has completed behavioral evaluation. It provides a portable `.mwf` project-memory protocol, managed `AGENTS.md` fallback instructions, and a standard-library CLI for initialization, scoped recall, typed candidate creation, inbox processing, health checks, duplicate detection, preservation-first compaction, migration, and explicit forgetting.
+- [`memory-with-files`](skills/memory-with-files/README.md) — Durable,
+  project-scoped agent memory in `.mwf`, including scoped recall, structured
+  decisions and incidents, handoffs, safe maintenance, and a standard-library
+  CLI.
+- [`mihomo-remote-linux`](skills/mihomo-remote-linux/README.md) — A
+  privacy-preserving, recovery-first guide for operating Mihomo on remote Linux
+  hosts, from loopback proxy services to guarded system-wide TUN routing.
 
 Repository-level commands under `scripts/` install skills for Codex, Pi Agent,
 or a custom target, safely uninstall one exact skill, and validate all source
