@@ -7,11 +7,11 @@ This repository is the source workspace for independently installable agent skil
 ```text
 skills/
   <skill-name>/          One self-contained skill package
-scripts/                 Future repository-wide install and validation tools
+scripts/                 Repository-wide install and validation tools
 docs/                    Repository conventions and design notes
 ```
 
-The first skill will live at `skills/memory-with-files/`. Generated evaluation workspaces, packaged artifacts, and local agent planning state are intentionally excluded from Git.
+Skill packages live under `skills/<skill-name>/`. Generated evaluation workspaces, packaged artifacts, and local agent planning state are intentionally excluded from Git.
 
 See [docs/repository-layout.md](docs/repository-layout.md) for the detailed structure and conventions.
 
