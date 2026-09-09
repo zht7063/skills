@@ -1,22 +1,22 @@
 # Operations
 
-Use `python3 scripts/mwf.py --help` for exact command syntax. Run the script from the skill directory or pass its absolute path; project discovery starts from `--root` or the current working directory.
+Use `mwf --help` for exact command syntax. Use the installed TypeScript CLI and always pass `--root`. The Python script is retained only for legacy compatibility tests and refuses migrated projects.
 
 ## Initialize
 
 1. Detect the root: Git root first, otherwise the highest applicable `AGENTS.md`. If neither exists, obtain an explicit root from the user.
-2. Ask whether shared `.mwf` content should be `track`ed or `ignore`d by Git. Do not infer the answer on first initialization.
+2. Use an already stated Git preference; otherwise ask whether shared `.mwf` content should be `track`ed or `ignore`d by Git. Do not infer the answer on first initialization.
 3. Run:
 
    ```bash
-   python3 scripts/mwf.py init --root /path/to/project --git-mode track
+   mwf init --root /path/to/project --git-mode track
    ```
 
 4. The command creates missing `.mwf` files, creates record directories, installs or refreshes the managed `AGENTS.md` block, and updates the managed `.gitignore` block.
 5. Existing records are not overwritten. Re-running initialization is idempotent.
 6. Run `doctor` and report created or changed files.
 
-Initialization is the only operation that installs the `AGENTS.md` block. Hooks are not part of the core skill.
+Use `mwf setup` for complete Harness registration plus project initialization and verification. `mwf init` only installs project memory and its managed `AGENTS.md` block. Neither should run on every session start; use bootstrap then.
 
 ## Recall
 
@@ -25,9 +25,9 @@ At task start, read `.mwf/index.md` and `.mwf/handoff.md`. Derive only the keys 
 Examples:
 
 ```bash
-python3 scripts/mwf.py recall --root /path/to/project --query "document the GT experiment"
-python3 scripts/mwf.py recall --root /path/to/project --path experiments/gt/runner.py --operation documentation
-python3 scripts/mwf.py recall --root /path/to/project --file-type .pdf --tool pandoc --operation conversion
+mwf recall --root /path/to/project --query "document the GT experiment"
+mwf recall --root /path/to/project --path experiments/gt/runner.py --operation documentation
+mwf recall --root /path/to/project --file-type .pdf --tool pandoc --operation conversion
 ```
 
 Treat the result as a shortlist. Read the returned records before acting; do not interpret a low-confidence keyword match as a rule.
@@ -39,7 +39,7 @@ For incidents, do not stop at the summary. Read the complete record and carry it
 Use `add` for a new record when the type, status, title, summary, and scope are known. The command allocates a stable ID and rebuilds the index.
 
 ```bash
-python3 scripts/mwf.py add \
+mwf add \
   --root /path/to/project \
   --type incident \
   --status resolved \
@@ -55,7 +55,7 @@ Non-candidate records require `--body` or `--body-file`; this prevents an accept
 Do not use `add` when the user statement is ambiguous. Create a correctly typed candidate with:
 
 ```bash
-python3 scripts/mwf.py propose \
+mwf propose \
   --root /path/to/project \
   --type preference \
   --title "Clarify Pandoc usage" \
@@ -70,7 +70,7 @@ The candidate is stored in `candidates/` with its concrete type and `status: can
 1. List only the `Pending` section without echoing credential-like content:
 
    ```bash
-   python3 scripts/mwf.py process-inbox --root /path/to/project
+   mwf process-inbox --root /path/to/project
    ```
 
 2. Classify each item using the protocol.
@@ -78,7 +78,7 @@ The candidate is stored in `candidates/` with its concrete type and `status: can
 4. Move processed entries deterministically. The command is dry-run by default:
 
    ```bash
-   python3 scripts/mwf.py process-inbox \
+   mwf process-inbox \
      --root /path/to/project --item 1 \
      --outcome "Created a scoped preference candidate" \
      --record-id PREF-20260827-003 --apply
@@ -100,7 +100,7 @@ Keep it short. State what the next session must know and do, not everything the 
 Run:
 
 ```bash
-python3 scripts/mwf.py doctor --root /path/to/project
+mwf doctor --root /path/to/project
 ```
 
 The doctor reports missing core files, malformed frontmatter, invalid IDs or statuses, duplicate IDs, likely duplicate records, stale index entries, broken record paths, missing Git-ignore protection for `local/`, unprocessed inbox items, resolved incidents without explicit applicability boundaries, and credential-like content anywhere in the current `.mwf` tree, including inbox, handoff, local, and archive files.
@@ -108,7 +108,7 @@ The doctor reports missing core files, malformed frontmatter, invalid IDs or sta
 Safe derived-data repairs may be applied with:
 
 ```bash
-python3 scripts/mwf.py rebuild-index --root /path/to/project
+mwf rebuild-index --root /path/to/project
 ```
 
 Do not automatically rewrite an ambiguous record or select a winner in a semantic conflict.
@@ -123,9 +123,9 @@ Compaction is semantic work, not a line-count operation.
 4. After confirming two records are semantic duplicates, preview and apply a preservation-first merge:
 
    ```bash
-   python3 scripts/mwf.py compact --root /path/to/project \
+   mwf compact --root /path/to/project \
      --canonical INC-20260827-001 --duplicate INC-20260827-002
-   python3 scripts/mwf.py compact --root /path/to/project \
+   mwf compact --root /path/to/project \
      --canonical INC-20260827-001 --duplicate INC-20260827-002 --apply
    ```
 

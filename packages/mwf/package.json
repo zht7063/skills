@@ -1,0 +1,44 @@
+{
+  "name": "@zht7063/mwf",
+  "version": "0.1.0",
+  "description": "Project-local file memory with a CLI and stdio MCP server",
+  "type": "module",
+  "bin": {
+    "mwf": "dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/core.js"
+  },
+  "files": [
+    "dist",
+    "assets",
+    "adapters",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/build.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "prepack": "npm run build",
+    "test:package": "npm run build && node scripts/check-package.mjs",
+    "test:pi": "node scripts/check-pi.mjs",
+    "format:check": "prettier --check src tests scripts package.json tsconfig.json"
+  },
+  "dependencies": {
+    "@iarna/toml": "2.2.5",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.11",
+    "prettier": "3.6.2",
+    "typescript": "5.9.3"
+  },
+  "bundleDependencies": [
+    "@iarna/toml",
+    "@modelcontextprotocol/sdk",
+    "zod"
+  ]
+}

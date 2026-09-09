@@ -4,6 +4,21 @@ Repository-level commands live under `scripts/`. They discover source packages
 under `skills/` and never place installation logic inside a distributable
 skill.
 
+## MWF: install the runtime and connect the project
+
+For Memory With Files, use [the MWF runtime guide](../packages/mwf/README.md). From the repository root, install and connect in one command (Node 22.16+ and npm required):
+
+```sh
+bash scripts/install-mwf.sh --root "/absolute/project" --harness codex --git-mode track
+```
+
+Add `--dry-run` to preview without writes; choose `--harness codex,pi` to include an already-installed Pi client. `--package /path/mwf.tgz` uses a bundled runtime instead of building the checkout.
+
+`mwf setup --root /absolute/project --harness codex,pi --git-mode track` installs
+project bootstrap rules and Harness configuration, then verifies the connection.
+The generic Skill installer below installs only the light instruction adapter;
+it does not install the MWF executable, MCP connection or project bootstrap.
+
 ## Install one skill
 
 The default target is Codex and the default mode is a symbolic link:

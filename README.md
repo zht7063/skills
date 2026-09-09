@@ -7,6 +7,7 @@ This repository is the source workspace for independently installable agent skil
 ```text
 skills/
   <skill-name>/          One self-contained skill package
+packages/mwf/            TypeScript CLI, local MCP and Harness setup
 scripts/                 Repository-wide install and validation tools
 docs/                    Repository conventions and design notes
 ```
@@ -19,8 +20,7 @@ See [docs/repository-layout.md](docs/repository-layout.md) for the detailed stru
 
 - [`memory-with-files`](skills/memory-with-files/README.md) — Durable,
   project-scoped agent memory in `.mwf`, including scoped recall, structured
-  decisions and incidents, handoffs, safe maintenance, and a standard-library
-  CLI.
+  decisions and incidents, handoffs, safe maintenance, and a local TypeScript CLI/MCP runtime.
 - [`mihomo-remote-linux`](skills/mihomo-remote-linux/README.md) — A
   privacy-preserving, recovery-first guide for operating Mihomo on remote Linux
   hosts, from loopback proxy services to guarded system-wide TUN routing.
@@ -31,3 +31,18 @@ packages. See [docs/installing-skills.md](docs/installing-skills.md) for command
 examples and safety behavior.
 
 Generated review workspaces remain local and ignored.
+
+## MWF local runtime
+
+MWF installation includes deterministic project setup, not just Skill copying.
+Build and install the local package, then connect a project:
+
+```bash
+npm ci --prefix packages/mwf
+npm run build --prefix packages/mwf
+npm install -g ./packages/mwf
+mwf setup --root /absolute/project --harness codex,pi --git-mode track
+```
+
+See [the runtime guide](packages/mwf/README.md) for packaging, migration,
+recovery guarantees and verification. The package has not been published to npm.

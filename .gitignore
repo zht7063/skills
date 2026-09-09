@@ -18,3 +18,8 @@ dist/
 # Editor and temporary files
 *.swp
 *~
+
+# Node package development
+node_modules/
+packages/*/dist/
+*.tgz

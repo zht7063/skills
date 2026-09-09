@@ -58,3 +58,11 @@ The repository ignores:
 - common runtime caches and temporary editor files.
 
 Source eval definitions remain tracked inside each skill so behavior can be reproduced.
+
+## MWF runtime package
+
+`packages/mwf/` contains the standalone TypeScript Core, CLI, stdio MCP server,
+project setup/detach operations, templates and thin Harness adapters. Its npm
+package is tested independently of the legacy Python tests. The old Python
+writer refuses projects adopted by the TypeScript runtime. File schema 1 and
+project-local Markdown remain compatible.

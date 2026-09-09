@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import fnmatch
+import functools
 import json
 import re
 import shutil
@@ -1205,6 +1206,26 @@ def main(argv: list[str] | None = None) -> int:
     except (MWFError, OSError) as exc:
         print(f"mwf: {exc}", file=sys.stderr)
         return 2
+
+
+def _guard_legacy_writer(function):
+    """Prevent this old writer from bypassing the TypeScript transaction lock."""
+    @functools.wraps(function)
+    def guarded(root, *args, **kwargs):
+        config_path = Path(root) / ".mwf" / "config.json"
+        if config_path.is_file():
+            try:
+                owner = json.loads(config_path.read_text(encoding="utf-8")).get("runtime_owner")
+            except (OSError, json.JSONDecodeError):
+                raise MWFError("Cannot verify memory ownership; use mwf doctor before writing.")
+            if owner == "mwf-typescript":
+                raise MWFError("This project uses the TypeScript MWF runtime. Use the mwf CLI or MCP tools; the legacy Python writer is disabled.")
+        return function(root, *args, **kwargs)
+    return guarded
+
+
+for _writer_name in ("initialize", "add_record", "process_inbox_item", "compact_duplicate", "rebuild_index", "migrate", "forget"):
+    globals()[_writer_name] = _guard_legacy_writer(globals()[_writer_name])
 
 
 if __name__ == "__main__":
