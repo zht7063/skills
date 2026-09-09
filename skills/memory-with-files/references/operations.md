@@ -1,6 +1,6 @@
 # Operations
 
-Use `mwf --help` for exact command syntax. Use the installed TypeScript CLI and always pass `--root`. The Python script is retained only for legacy compatibility tests and refuses migrated projects.
+Use `mwf --help` for exact command syntax. Use the installed TypeScript CLI and always pass `--root`. Node.js 22.16+ is required; no Python MWF runtime is shipped.
 
 ## Initialize
 
@@ -50,7 +50,7 @@ mwf add \
   --body-file /path/to/prepared-incident-body.md
 ```
 
-Non-candidate records require `--body` or `--body-file`; this prevents an accepted durable record from being created with missing evidence or limits. For updates, edit the existing record, preserve its ID and `created` date, advance `updated`, then rebuild the index.
+Non-candidate records require `--body` or `--body-file`; this prevents an accepted durable record from being created with missing evidence or limits. For updates, use `mwf update --root /path/to/project --id ID` with the revised fields; preview first and use `--apply` to commit. The runtime preserves identity and rebuilds routing.
 
 Do not use `add` when the user statement is ambiguous. Create a correctly typed candidate with:
 
@@ -117,7 +117,7 @@ Do not automatically rewrite an ambiguous record or select a winner in a semanti
 
 Compaction is semantic work, not a line-count operation.
 
-1. Run the doctor and inspect inactive, duplicated, or weakly routed records. Use `mwf.py duplicates` to obtain a non-destructive shortlist.
+1. Run the doctor and inspect inactive, duplicated, or weakly routed records. Use `mwf duplicates --root /path/to/project` to obtain a non-destructive shortlist.
 2. Compare scope, rationale, evidence, and replacement conditions.
 3. Merge duplicate active conclusions without losing unique limits or validation evidence.
 4. After confirming two records are semantic duplicates, preview and apply a preservation-first merge:
@@ -136,10 +136,10 @@ Ask the user before resolving a conflict that changes an active rule or accepted
 
 ## Migrate
 
-Migration must be recoverable.
+Migration must be recoverable. Existing schema-1 memory is readable directly; explicitly run `mwf init` or `mwf setup` with a Git mode before new writes. Stop any externally installed old writers before adoption.
 
 1. Run `migrate` without `--apply` to inspect the current schema and proposed action.
-2. If migration is needed, run with `--apply`; the command creates a timestamped sibling backup before changing files.
+2. If migration is needed, run with `--apply`; supply `--git-mode track` or `ignore`; the command saves a recoverable backup under `.mwf/local/backups/` before changing files.
 3. Preserve unknown files and user-authored inbox content.
 4. Run the doctor and review the diff.
 

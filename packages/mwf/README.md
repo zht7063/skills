@@ -134,11 +134,33 @@ Stdout contains only MCP frames; errors and diagnostics use stderr.
 
 ## Migration and recovery
 
-File schema stays at 1. Existing Python memory is readable without conversion.
-Run explicit `init`/`setup` to adopt a schema-1 legacy project before TS writes. Older schemas require backed-up `migrate --apply` first. The
-repository's Python writer refuses projects marked `runtime_owner: mwf-typescript`.
-Older copies of that script cannot be controlled: stop old sessions/writers before
-adoption. Keep the existing Python tests as compatibility reference.
+TypeScript is the sole MWF runtime. Python-era **schema-1** `.mwf` files are
+readable without conversion. New writes require explicit project adoption;
+read-only recall does not silently adopt a project.
+
+After installing the current runtime, stop any separately installed old Python
+writers and connect the existing project:
+
+```sh
+mwf setup --root /absolute/project --harness codex --git-mode track
+mwf doctor --root /absolute/project
+```
+
+Preserve the project's Git preference: use `--git-mode ignore` for local-only
+memory. Use `--harness codex,pi` for both clients. `mwf init --root
+/absolute/project --git-mode track` adopts memory and refreshes managed rules
+without registering a client. Setup/init preserves existing records, inbox
+content and user rules outside managed blocks; repeated initialization is
+idempotent. Conflicting edits inside owned bootstrap blocks require reconciliation.
+
+Fixed Python-generated fixtures verify identical recall scores, reasons and
+incident boundaries before and after adoption, plus record and user-content
+preservation. Runtime tests no longer require Python. Removing the old runtime
+from this repository does not update separately installed copies.
+
+Schemas older than 1 require a backed-up migration before setup. Preview with
+`mwf migrate --root /absolute/project`, then apply with `--apply --git-mode track`
+(or `ignore`) and run setup/doctor. Newer unknown schemas are rejected.
 
 All new reads/writes take a project lock. A tiny `.mwf/local/runtime.sqlite`
 file provides the OS-backed mutex via Node's built-in SQLite; **no memory records

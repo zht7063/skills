@@ -34,7 +34,8 @@ Generated review workspaces remain local and ignored.
 
 ## MWF local runtime
 
-MWF installation includes deterministic project setup, not just Skill copying.
+MWF uses TypeScript as its sole runtime and requires Node.js 22.16+.
+Its installation includes deterministic project setup, not just Skill copying.
 Build and install the local package, then connect a project:
 
 ```bash
@@ -46,3 +47,11 @@ mwf setup --root /absolute/project --harness codex,pi --git-mode track
 
 See [the runtime guide](packages/mwf/README.md) for packaging, migration,
 recovery guarantees and verification. The package has not been published to npm.
+
+Existing Python-era schema-1 `.mwf` memory is readable without conversion.
+Before new writes, stop old writers and explicitly adopt the project with
+`mwf setup`, preserving its `track` or `ignore` Git mode. See
+[legacy compatibility and adoption](packages/mwf/README.md#migration-and-recovery).
+
+Local `node_modules/` directories and build outputs are Git-ignored. Commit
+`package.json` and `package-lock.json`; restore dependencies with `npm ci`.

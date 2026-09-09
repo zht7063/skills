@@ -1,6 +1,6 @@
 # Project handoff
 
-Updated: __DATE__
+Updated: 2026-09-09
 
 ## Current goal and stage
 

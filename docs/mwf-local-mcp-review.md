@@ -1,5 +1,8 @@
 # MWF 本地 MCP 改造评估
 
+> Historical implementation/review snapshot. The Python MWF runtime was retired on 2026-09-09; current setup and compatibility behavior are documented in [the runtime guide](../packages/mwf/README.md). Earlier Python test counts below describe the pre-retirement state.
+
+
 日期：2026-09-09。评估输入：用户提供的《MWF：从 Skill 改造为本地 MCP 的讨论结论》、当前仓库实现、官方文档与本机 Pi 文档。本文记录已讨论的设计依据；实现和验收结果见 [实施记录](mwf-implementation.md)。
 
 ## 结论

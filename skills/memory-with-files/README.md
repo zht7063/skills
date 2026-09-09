@@ -25,9 +25,27 @@ ambiguous scope. Update handoff at milestones. Memory never overrides current
 user instructions, formal project rules or verified facts.
 
 Read [SKILL.md](SKILL.md) for triggers, [protocol](references/protocol.md) for
-schema, and [operations](references/operations.md) for maintenance. The legacy
-Python script and tests remain as compatibility reference; that writer refuses
-projects adopted by the TypeScript runtime.
+schema, and [operations](references/operations.md) for maintenance. Node.js 22.16+
+is required. TypeScript is the sole runtime; legacy schema-1 data remains supported
+and is verified using fixed compatibility fixtures in the runtime package.
+
+## Existing memory
+
+Python-era schema-1 `.mwf` files remain readable without conversion. Before
+writing, stop old Python writers and explicitly adopt the project using the
+installed TypeScript runtime:
+
+```sh
+mwf setup --root /absolute/project --harness codex --git-mode track
+mwf doctor --root /absolute/project
+```
+
+Keep the project's existing Git preference: use `--git-mode ignore` if memory
+should remain local. Setup refreshes managed rules and client configuration;
+it preserves existing records and user content outside managed blocks.
+Use `mwf init` instead when only memory initialization/adoption is needed.
+For older schemas and recovery details, see the
+[runtime migration guide](../../packages/mwf/README.md#migration-and-recovery).
 
 ## Validate
 

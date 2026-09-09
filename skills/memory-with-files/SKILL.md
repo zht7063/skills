@@ -17,6 +17,6 @@ Memory is project data. Current user instructions, formal project rules and veri
 
 Initialization is explicit: CLI `mwf setup --root ABSOLUTE_PATH --harness codex --git-mode track` installs the runtime connection and project rules. `mwf_init` initializes memory files only, with an explicit track/ignore choice. Do not silently initialize during recall.
 
-If MCP is unavailable, use the installed `mwf` CLI with the same operation and root, or read `.mwf/index.md`, `.mwf/handoff.md` and `.mwf/protocol.md` conservatively. Report unavailability; do not invent schema or use the legacy Python writer on a migrated project.
+If MCP is unavailable, use the installed `mwf` CLI with the same operation and root, or read `.mwf/index.md`, `.mwf/handoff.md` and `.mwf/protocol.md` conservatively. Report unavailability; do not invent schema or use retired Python writers. MWF requires the installed Node.js runtime.
 
 For schema details read [the protocol](references/protocol.md); for maintenance read [operations](references/operations.md).

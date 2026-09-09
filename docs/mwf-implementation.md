@@ -1,5 +1,8 @@
 # MWF 本地 CLI/MCP 实施记录
 
+> Historical implementation/review snapshot. The Python MWF runtime was retired on 2026-09-09; current setup and compatibility behavior are documented in [the runtime guide](../packages/mwf/README.md). Earlier Python test counts below describe the pre-retirement state.
+
+
 日期：2026-09-09。实现位置：`packages/mwf/`。用户批准的设计依据见 [改造评估](mwf-local-mcp-review.md)。
 
 ## 已实现

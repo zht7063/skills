@@ -63,6 +63,8 @@ Source eval definitions remain tracked inside each skill so behavior can be repr
 
 `packages/mwf/` contains the standalone TypeScript Core, CLI, stdio MCP server,
 project setup/detach operations, templates and thin Harness adapters. Its npm
-package is tested independently of the legacy Python tests. The old Python
-writer refuses projects adopted by the TypeScript runtime. File schema 1 and
-project-local Markdown remain compatible.
+package is the sole MWF runtime and owns its templates. The skill is a thin
+instruction adapter; it does not ship a Python writer or duplicate templates.
+Fixed legacy fixtures in `packages/mwf/tests/fixtures/` verify schema-1 data
+compatibility without running Python. Repository installation and validation
+tools remain Python-based.

@@ -3,16 +3,21 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { execute } from "../dist/core.js";
 import { setup, detach } from "../dist/setup.js";
 import { Transaction, withProjectLock } from "../dist/storage.js";
 const cli = fileURLToPath(new URL("../dist/cli.js", import.meta.url));
 const core = fileURLToPath(new URL("../dist/core.js", import.meta.url));
-const legacy = fileURLToPath(
-  new URL("../../../skills/memory-with-files/scripts/mwf.py", import.meta.url),
+const legacyFixture = fileURLToPath(
+  new URL("./fixtures/legacy-schema-1/", import.meta.url),
 );
+function legacyProject(t) {
+  const root = temp(t);
+  fs.cpSync(path.join(legacyFixture, "project"), root, { recursive: true });
+  return root;
+}
 const temp = (t) => {
   const p = fs.realpathSync(
     fs.mkdtempSync(path.join(os.tmpdir(), "mwf-test-")),
@@ -433,34 +438,64 @@ test("setup collision leaves application files untouched", async (t) => {
   );
   assert.equal(fs.existsSync(path.join(root, ".mwf")), false);
 });
-test("Python-generated files have equivalent scoped recall in TypeScript", (t) => {
-  const root = temp(t);
-  const script = `import importlib.util,sys,json,argparse\nspec=importlib.util.spec_from_file_location('mwf',sys.argv[1]);m=importlib.util.module_from_spec(spec);sys.modules['mwf']=m;spec.loader.exec_module(m)\nfrom pathlib import Path\nr=Path(sys.argv[2]);m.initialize(r,'track','en')\na=argparse.Namespace(type='incident',status='resolved',title='Embedded DOCX conversion',summary='Use LibreOffice for embedded objects',body='## Applicability\\nPandoc remains valid for text only.\\n\\n## Invalid when\\nConverter changes.',body_file=None,path=['reports/**'],file_type=['.docx'],component=None,tool=['pandoc'],operation=['conversion'],phase=None,keyword=['embedded objects'])\nm.add_record(r,a)\nq=argparse.Namespace(query='embedded objects',path='reports/a.docx',file_type=['.docx'],component=[],tool=[],operation=['conversion'],phase=[],limit=10)\nprint(json.dumps(m.recall(r,q)))`;
-  const r = spawnSync("python3", ["-c", script, legacy, root], {
-    encoding: "utf8",
-  });
-  assert.equal(r.status, 0, r.stderr);
-  const expected = JSON.parse(r.stdout);
-  const actual = execute("recall", {
+test("legacy schema-1 golden files preserve scoped recall", (t) => {
+  const root = legacyProject(t);
+  const expected = JSON.parse(
+    fs.readFileSync(path.join(legacyFixture, "recall.json"), "utf8"),
+  );
+  const query = {
     project_root: root,
     query: "embedded objects",
     path: "reports/a.docx",
     file_type: [".docx"],
     operation: ["conversion"],
-  }).data.map(({ body, ...rest }) => rest);
-  assert.deepEqual(actual, expected);
+  };
+  const recall = () =>
+    execute("recall", query).data.map(({ body, ...rest }) => rest);
+  assert.deepEqual(recall(), expected);
+  assert.deepEqual(
+    execute("recall", { project_root: root, file_type: [".docx"] }).data,
+    [],
+  );
+  init(root);
+  assert.deepEqual(recall(), expected);
 });
 
-test("legacy writer refuses a project after explicit TypeScript adoption", (t) => {
-  const root = temp(t);
-  init(root);
-  const r = spawnSync(
-    "python3",
-    [legacy, "init", "--root", root, "--git-mode", "track"],
-    { encoding: "utf8" },
+test("legacy adoption is explicit and preserves records and user content", (t) => {
+  const root = legacyProject(t);
+  const expected = JSON.parse(
+    fs.readFileSync(path.join(legacyFixture, "recall.json"), "utf8"),
   );
-  assert.equal(r.status, 2);
-  assert.match(r.stderr, /legacy Python writer is disabled/);
+  const record = path.join(root, expected[0].path);
+  const before = fs.readFileSync(record, "utf8");
+  const configPath = path.join(root, ".mwf/config.json");
+  const configBefore = fs.readFileSync(configPath, "utf8");
+  assert.equal(
+    execute("status", { project_root: root }).data.runtime_owner,
+    "legacy",
+  );
+  assert.throws(() => add(root), /explicit init\/setup/);
+  execute("init", { project_root: root, git_mode: "track", dry_run: true });
+  assert.equal(fs.readFileSync(configPath, "utf8"), configBefore);
+  const agents = path.join(root, "AGENTS.md");
+  fs.writeFileSync(
+    agents,
+    "# User rules\nPreserve this.\n" + fs.readFileSync(agents, "utf8"),
+  );
+  const inbox = path.join(root, ".mwf/inbox.md");
+  const inboxBefore = fs.readFileSync(inbox, "utf8") + "\nUser intake note.\n";
+  fs.writeFileSync(inbox, inboxBefore);
+  init(root);
+  assert.equal(
+    execute("status", { project_root: root }).data.runtime_owner,
+    "mwf-typescript",
+  );
+  assert.equal(fs.readFileSync(record, "utf8"), before);
+  assert.equal(fs.readFileSync(inbox, "utf8"), inboxBefore);
+  assert.match(fs.readFileSync(agents, "utf8"), /Preserve this/);
+  assert.deepEqual(init(root).changed_files, []);
+  assert.equal(add(root).ok, true);
+  assert.equal(execute("doctor", { project_root: root }).ok, true);
 });
 
 test("bootstrap refresh preserves outside edits and refuses edits inside the owned block", (t) => {
