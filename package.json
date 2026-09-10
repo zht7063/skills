@@ -1,0 +1,20 @@
+{
+  "name": "skills-repository",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit && npm run typecheck --prefix packages/mwf",
+    "test:tools": "tsc --noEmit && node --experimental-strip-types --test tests/*.test.ts skills/*/tests/*.test.ts",
+    "validate": "node --experimental-strip-types scripts/validate-all.ts",
+    "test": "npm run test:tools && npm run validate && npm test --prefix packages/mwf",
+    "format:check": "prettier --check scripts tests skills/*/tests/*.ts package.json tsconfig.json && npm run format:check --prefix packages/mwf"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.11",
+    "typescript": "5.9.3",
+    "prettier": "3.6.2"
+  }
+}

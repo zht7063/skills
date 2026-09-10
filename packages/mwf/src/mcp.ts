@@ -64,7 +64,7 @@ export async function serve(root: string) {
           openWorldHint: false,
         },
       },
-      async (args: any) => {
+      async (args: { project_root: string }) => {
         try {
           if (canonicalRoot(args.project_root) !== root)
             throw new MWFError(

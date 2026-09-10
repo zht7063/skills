@@ -55,3 +55,28 @@ Before new writes, stop old writers and explicitly adopt the project with
 
 Local `node_modules/` directories and build outputs are Git-ignored. Commit
 `package.json` and `package-lock.json`; restore dependencies with `npm ci`.
+
+## Development
+
+All maintained executable source, repository scripts, tests and the Pi adapter
+are TypeScript. Requires Node **22.16+** and npm. Restore both independent
+lockfiles before running the full checks:
+
+```sh
+npm ci
+npm ci --prefix packages/mwf
+npm test
+npm run format:check
+npm run test:package --prefix packages/mwf
+```
+
+`npm test` checks types for runtime, tooling and tests, runs repository and skill
+tests, validates skills and runs MWF integration tests. Repository commands use
+`node --experimental-strip-types scripts/<command>.ts` and need no build step or
+third-party loader. The published-package layout continues to use compiled JS;
+TS scripts and development dependencies are not shipped. See
+[installation commands](docs/installing-skills.md).
+
+The two Python modules under evaluation fixtures represent example user projects;
+they are test data and are never executed by the repository toolchain. Historical
+review documents preserve their original Python-era descriptions.

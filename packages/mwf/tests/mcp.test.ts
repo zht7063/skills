@@ -1,4 +1,6 @@
 import test from "node:test";
+import { z } from "zod";
+import { bootstrapData } from "./contracts.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -33,7 +35,7 @@ test("real stdio tool calls validate roots, perform writes and return scoped boo
   const tools = await client.listTools();
   assert.equal(tools.tools.length, 15);
   assert.equal(
-    tools.tools.find((t) => t.name === "mwf_recall").annotations.readOnlyHint,
+    tools.tools.find((t) => t.name === "mwf_recall")?.annotations?.readOnlyHint,
     true,
   );
   let reply = await client.callTool({
@@ -65,7 +67,9 @@ test("real stdio tool calls validate roots, perform writes and return scoped boo
     arguments: { project_root: root, query: "setup" },
   });
   assert.equal(reply.isError, false);
-  const result = reply.structuredContent;
+  const result = z
+    .object({ data: bootstrapData })
+    .parse(reply.structuredContent);
   assert.ok(
     result.data.matches.some((m) => m.summary === "Always verify setup"),
   );

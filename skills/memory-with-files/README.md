@@ -51,5 +51,5 @@ For older schemas and recovery details, see the
 
 ```sh
 npm test --prefix packages/mwf
-python3 scripts/validate-all.py --tests
+node --experimental-strip-types scripts/validate-all.ts --tests
 ```

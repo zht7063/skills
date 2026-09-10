@@ -3,14 +3,15 @@
 A TypeScript CLI and stdio MCP server share one Core. Memory remains readable,
 Git-trackable Markdown in each project's `.mwf/`. No network service or model
 API is needed for file operations. Node **22.16+** is required. Tested locally
-with Node 26.7, Codex CLI 0.153.4 and Pi 0.83.0.
+with Node 22.16 and 26.7, and Pi 0.83.0. The earlier Codex CLI 0.153.4
+behavioral acceptance is recorded in the implementation notes.
 
 ## One-command installation
 
 From a source checkout, with Node **22.16+** and npm installed:
 
 ```sh
-bash scripts/install-mwf.sh --root "/absolute/project" --harness codex --git-mode track
+node --experimental-strip-types scripts/install-mwf.ts --root "/absolute/project" --harness codex --git-mode track
 ```
 
 The script builds the current checkout, installs the runtime under
@@ -23,7 +24,7 @@ Building and installing the Pi adapter may need network access.
 For an existing bundled tarball, skip the build and install the runtime offline:
 
 ```sh
-bash scripts/install-mwf.sh --package /path/zht7063-mwf-0.1.0.tgz --root "/absolute/project" --harness codex --git-mode track
+node --experimental-strip-types scripts/install-mwf.ts --package /path/zht7063-mwf-0.1.0.tgz --root "/absolute/project" --harness codex --git-mode track
 ```
 
 Use `--prefix /custom/runtime` to change the installation directory, `--git-mode
@@ -32,8 +33,7 @@ without writes (this does not validate project setup conflicts). The script
 requires an explicit existing project and Git mode. Repeating it refreshes the
 runtime and reruns idempotent setup. If setup fails, the installed runtime and
 completed setup steps remain available for diagnosis and retry. Stop active MWF
-sessions before upgrading the runtime. A hosted `curl | bash` distribution is
-not yet published; this entry point runs from the checkout.
+sessions before upgrading the runtime. This TypeScript entry point runs from the checkout without a prior build or installed dependencies.
 
 ## Build and install
 
@@ -200,14 +200,27 @@ Setup is idempotent and refuses unmanaged configuration collisions.
 
 ## Validation
 
+From the repository root:
+
 ```sh
-npm test --prefix packages/mwf
-python3 scripts/validate-all.py --tests
+npm ci
+npm ci --prefix packages/mwf
+npm test
+npm run format:check
+npm run test:package --prefix packages/mwf
 ```
+
+Runtime code uses the emitting `tsconfig.json`; tools and tests use the strict,
+non-emitting `tsconfig.tools.json`. Node's `--experimental-strip-types` executes
+development TS on the minimum Node version; `tsc` separately checks it. Installed
+CLI/MCP entry points continue to execute compiled JS without this flag.
+The Pi extension is compiled from `src/pi-adapter.ts`; setup only substitutes
+JSON configuration into that compiled template, retaining `.pi/extensions/mwf.js`
+and its ownership/refresh/detach behavior.
 
 Tests cover legacy recall equivalence, strict inputs, secret redaction, candidate
 promotion, maintenance, concurrent writers, killed-writer recovery, external edits,
 symlinks, persistent idempotency, real MCP calls and setup/detach. Optional Pi
 acceptance uses the actual installed Pi loader and extension runner without a
-model/API call; see `scripts/check-pi.mjs`. Packed installation and Codex smoke
+model/API call; see `scripts/check-pi.ts`. Packed installation and Codex smoke
 results are recorded in the repository implementation notes.

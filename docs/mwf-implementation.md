@@ -53,14 +53,14 @@ Codex 一次成功的新会话是行为验证证据，不等于未来所有模�
 npm ci --prefix packages/mwf
 npm test --prefix packages/mwf
 npm run test:package --prefix packages/mwf
-python3 scripts/validate-all.py --tests
-python3 -m unittest discover -s tests -p 'test_*.py'
+node --experimental-strip-types scripts/validate-all.ts --tests
+npm run test:tools
 ```
 
 Pi 隔离验收：先对临时项目运行 `setup --harness pi`，设置临时 `PI_CODING_AGENT_DIR`，然后：
 
 ```sh
-node packages/mwf/scripts/check-pi.mjs /absolute/test-project /absolute/pi-package-directory
+node --experimental-strip-types packages/mwf/scripts/check-pi.ts /absolute/test-project /absolute/pi-package-directory
 ```
 
 本次交付是本地实现和可安装包，尚未发布 npm，也未将 MWF 接入用户的真实业务项目。

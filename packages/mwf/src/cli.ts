@@ -6,8 +6,13 @@ import { MWFError } from "./storage.js";
 import { serve } from "./mcp.js";
 import { detach, setup } from "./setup.js";
 const HELP = `MWF — project-local file memory\n\nmwf setup --root /project --harness codex,pi --git-mode track\nmwf mcp --root /project\nmwf bootstrap|recall|status|doctor --root /project\nmwf add|propose --root /project --type preference --title ... --summary ... --body ...\nmwf handoff|update|process-inbox|duplicates|compact|rebuild-index|migrate|forget --root /project\nmwf detach --root /project [--apply]\n\nAll operations emit JSON. Use --input JSON or --input-file FILE for structured input.\nUse --scope JSON for record routing. --path/--tool/--component/--operation flags are repeatable.\nMaintenance previews by default; --apply commits. init/setup require --git-mode track|ignore.\nsetup --dry-run previews; --no-install-pi-adapter requires the pinned adapter already configured.\nMCP servers are bound to one explicit root. --help shows this help; --version shows package version.\n`;
+function stringArg(value: unknown, label: string): string {
+  if (typeof value !== "string")
+    throw new MWFError("INVALID_INPUT", `${label} must be a string.`);
+  return value;
+}
 function parse(argv: string[]) {
-  const args: Record<string, any> = {};
+  const args: Record<string, string | string[] | boolean> = {};
   const arrays = new Set([
     "file_type",
     "component",
@@ -38,17 +43,20 @@ function parse(argv: string[]) {
     if (i + 1 >= argv.length || argv[i + 1].startsWith("--"))
       throw new MWFError("INVALID_INPUT", `Missing value for ${flag}`);
     const value = argv[++i];
-    if (arrays.has(key)) (args[key] ??= []).push(value);
-    else if (key === "path") (args.path ??= []).push(value);
-    else args[key] = value;
+    if (arrays.has(key) || key === "path") {
+      const previous = args[key];
+      args[key] = [...(Array.isArray(previous) ? previous : []), value];
+    } else args[key] = value;
   }
-  let input: Record<string, any> = {};
+  let input: Record<string, unknown> = {};
   if (args.input && args.input_file)
     throw new MWFError("INVALID_INPUT", "Use input or input-file, not both.");
   if (args.input || args.input_file) {
     try {
       input = JSON.parse(
-        args.input ?? fs.readFileSync(args.input_file, "utf8"),
+        typeof args.input === "string"
+          ? args.input
+          : fs.readFileSync(stringArg(args.input_file, "input-file"), "utf8"),
       );
     } catch {
       throw new MWFError("INVALID_INPUT", "Invalid input JSON.");
@@ -60,13 +68,16 @@ function parse(argv: string[]) {
   delete args.input_file;
   Object.assign(input, args);
   if (input.root) {
-    input.project_root = path.resolve(input.root);
+    input.project_root = path.resolve(stringArg(input.root, "root"));
     delete input.root;
   }
   if (input.body_file) {
     if (input.body)
       throw new MWFError("INVALID_INPUT", "Use body or body-file, not both.");
-    input.body = fs.readFileSync(input.body_file, "utf8");
+    input.body = fs.readFileSync(
+      stringArg(input.body_file, "body-file"),
+      "utf8",
+    );
     delete input.body_file;
   }
   for (const key of ["item", "limit", "threshold"])
@@ -100,7 +111,9 @@ async function main() {
     for (const [from, to] of Object.entries(mapping))
       if (a[from] !== undefined) {
         a.scope ??= {};
-        a.scope[to] = a[from];
+        if (!a.scope || typeof a.scope !== "object" || Array.isArray(a.scope))
+          throw new MWFError("INVALID_INPUT", "Scope must be a JSON object.");
+        (a.scope as Record<string, unknown>)[to] = a[from];
         delete a[from];
       }
   } else if (Array.isArray(a.path)) {
@@ -111,7 +124,7 @@ async function main() {
   if (op === "mcp") {
     if (Object.keys(a).some((k) => k !== "project_root") || !a.project_root)
       throw new MWFError("INVALID_INPUT", "mcp requires --root only.");
-    await serve(a.project_root);
+    await serve(stringArg(a.project_root, "root"));
     return;
   }
   let result;
@@ -125,7 +138,7 @@ async function main() {
         "INVALID_INPUT",
         "detach requires --root and optional --apply.",
       );
-    result = detach(a.project_root, a.apply);
+    result = detach(stringArg(a.project_root, "root"), a.apply === true);
   } else {
     if (!Object.hasOwn(schemas, op))
       throw new MWFError(

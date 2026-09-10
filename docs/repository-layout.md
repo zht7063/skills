@@ -7,26 +7,32 @@
 - Preserve room for future skills without imposing unused directories on each one.
 - Keep generated evaluations, packages, and agent-local work out of source control.
 
-## Planned structure
+## Structure
 
 ```text
 .
 ├── README.md
+├── package.json          # Private repository tooling and verification commands
+├── package-lock.json
+├── tsconfig.json         # Strict checks for repository tools and skill tests
+├── packages/
+│   └── mwf/              # Independently installable CLI/MCP runtime
 ├── docs/
 │   └── repository-layout.md
 ├── scripts/
-│   ├── _skill_tools.py        # Shared dependency-free implementation
-│   ├── install-skill.py       # Install one skill into a supported agent
-│   ├── uninstall-skill.py     # Preview or remove one installed skill
-│   └── validate-all.py        # Validate every skill package
+│   ├── skill-tools.ts         # Shared dependency-free implementation
+│   ├── arguments.ts           # Shared CLI parsing/error handling
+│   ├── install-mwf.ts         # Bootstrap and connect the MWF runtime
+│   ├── install-skill.ts       # Install one skill into a supported agent
+│   ├── uninstall-skill.ts     # Preview or remove one installed skill
+│   └── validate-all.ts        # Validate every skill package
 ├── tests/
-│   └── test_repository_scripts.py
+│   └── repository-scripts.test.ts
 └── skills/
     ├── memory-with-files/
     │   ├── SKILL.md
     │   ├── agents/
     │   │   └── openai.yaml
-    │   ├── scripts/           # Deterministic initialization and maintenance
     │   ├── references/        # Memory protocol and operation-specific guidance
     │   └── evals/             # Versioned behavioral test prompts
     └── <future-skill>/
@@ -67,4 +73,4 @@ package is the sole MWF runtime and owns its templates. The skill is a thin
 instruction adapter; it does not ship a Python writer or duplicate templates.
 Fixed legacy fixtures in `packages/mwf/tests/fixtures/` verify schema-1 data
 compatibility without running Python. Repository installation and validation
-tools remain Python-based.
+tools and tests are also TypeScript; Node 22.16+ runs them with `--experimental-strip-types`.

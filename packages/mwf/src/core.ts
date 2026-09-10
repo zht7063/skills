@@ -644,7 +644,11 @@ export function diagnose(tx: Transaction) {
 function purgeBackups(tx: Transaction) {
   for (const file of tx.files(".mwf/local/backups")) tx.set(file, null);
 }
-export function operate(tx: Transaction, op: Operation, a: any): unknown {
+type OperationArguments = { [K in Operation]: z.output<(typeof schemas)[K]> };
+type Command = {
+  [K in Operation]: [op: K, args: OperationArguments[K]];
+}[Operation];
+export function operate(tx: Transaction, ...[op, a]: Command): unknown {
   if (op === "init") return initialize(tx, a.git_mode, a.language);
   if (op === "doctor") return diagnose(tx);
   if (op === "status") {
@@ -717,8 +721,8 @@ export function operate(tx: Transaction, op: Operation, a: any): unknown {
     const status =
       op === "propose"
         ? "candidate"
-        : (a.status ?? TYPES[a.type as keyof typeof TYPES].default);
-    const info = TYPES[a.type as keyof typeof TYPES];
+        : (("status" in a ? a.status : undefined) ?? TYPES[a.type].default);
+    const info = TYPES[a.type];
     if (!(info.statuses as readonly string[]).includes(status))
       throw new MWFError("INVALID_STATUS", "Invalid status for record type.");
     const body =
@@ -909,26 +913,31 @@ export function operate(tx: Transaction, op: Operation, a: any): unknown {
   }
   throw new MWFError("UNKNOWN_OPERATION", "Unknown operation.");
 }
-export function isMutation(op: Operation, a: any) {
+export function isMutation(op: Operation, a: OperationArguments[Operation]) {
   return (
     !["status", "doctor", "bootstrap", "recall", "duplicates"].includes(op) &&
-    !(op === "process-inbox" && a.item === undefined) &&
+    !(op === "process-inbox" && !("item" in a && a.item !== undefined)) &&
     !("apply" in a && !a.apply) &&
-    !a.dry_run
+    !("dry_run" in a && a.dry_run)
   );
 }
-function stable(value: any): string {
+function stable(value: unknown): string {
   if (Array.isArray(value)) return "[" + value.map(stable).join(",") + "]";
   if (value && typeof value === "object")
     return (
       "{" +
       Object.keys(value)
         .sort()
-        .map((k) => JSON.stringify(k) + ":" + stable(value[k]))
+        .map(
+          (k) =>
+            JSON.stringify(k) +
+            ":" +
+            stable((value as Record<string, unknown>)[k]),
+        )
         .join(",") +
       "}"
     );
-  return JSON.stringify(value);
+  return JSON.stringify(value) ?? "undefined";
 }
 export function execute(
   op: Operation,
@@ -943,7 +952,7 @@ export function execute(
         .map((i) => `${i.path.join(".")}: ${i.message}`)
         .join("; "),
     );
-  const a: any = parsed.data;
+  const a = parsed.data;
   const root = canonicalRoot(a.project_root);
   a.project_root = root;
   // Validate unsupported schemas and path boundaries before creating lock metadata.
@@ -956,7 +965,10 @@ export function execute(
       ? ["Recovered an interrupted file transaction."]
       : [];
     const requestHash = hash(stable({ op, ...a, request_id: undefined }));
-    const key = a.request_id ? hash(a.request_id) : null;
+    const key =
+      "request_id" in a && typeof a.request_id === "string" && a.request_id
+        ? hash(a.request_id)
+        : null;
     const receiptPath = key ? `.mwf/local/requests/${key}.json` : null;
     if (mutation && receiptPath) {
       const raw = tx.get(receiptPath);
@@ -970,10 +982,16 @@ export function execute(
         return { ...previous.result, replayed: true };
       }
     }
-    const data = operate(tx, op, a);
+    // safeParse above establishes the correlation between operation and arguments.
+    const data = operate(tx, ...([op, a] as Command));
     const changed = tx.changes().map((c) => c.path);
     const result: Result = {
-      ok: op === "doctor" ? (data as any).ok : true,
+      ok:
+        op !== "doctor" ||
+        (typeof data === "object" &&
+          data !== null &&
+          "ok" in data &&
+          data.ok === true),
       operation: op,
       project_root: root,
       schema_version: SCHEMA_VERSION,

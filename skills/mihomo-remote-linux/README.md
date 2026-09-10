@@ -61,5 +61,5 @@ required before changing systemd or enabling TUN. Run the package integrity
 test from the repository root with:
 
 ```bash
-python3 -m unittest skills/mihomo-remote-linux/tests/test_skill_integrity.py
+node --experimental-strip-types --test skills/mihomo-remote-linux/tests/skill-integrity.test.ts
 ```

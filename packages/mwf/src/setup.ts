@@ -31,12 +31,12 @@ export const setupSchema = z
   })
   .strict();
 const cliPath = fileURLToPath(new URL("./cli.js", import.meta.url));
-function json(text: string | null, label: string): any {
+function json(text: string | null, label: string): Record<string, unknown> {
   try {
-    const value = JSON.parse(text ?? "{}");
+    const value: unknown = JSON.parse(text ?? "{}");
     if (!value || typeof value !== "object" || Array.isArray(value))
       throw new Error();
-    return value;
+    return value as Record<string, unknown>;
   } catch {
     throw new MWFError(
       "INVALID_CONFIG",
@@ -45,8 +45,26 @@ function json(text: string | null, label: string): any {
   }
 }
 function extension(root: string) {
-  return `// Generated MWF adapter v1. Business logic lives in the installed CLI.\nimport {execFile} from 'node:child_process';\nimport {promisify} from 'node:util';\nimport {realpathSync} from 'node:fs';\nimport path from 'node:path';\nconst run=promisify(execFile);\nconst root=${JSON.stringify(root)};\nconst node=${JSON.stringify(process.execPath)};\nconst cli=${JSON.stringify(cliPath)};\nexport default function(pi){\n let bootstrapped=false;\n pi.on('session_start',()=>{bootstrapped=false;});\n pi.on('session_compact',()=>{bootstrapped=false;});\n pi.on('session_tree',()=>{bootstrapped=false;});\n pi.on('before_agent_start',async(event,ctx)=>{\n  const cwd=realpathSync(ctx.cwd);\n  if(cwd!==root&&!cwd.startsWith(root+path.sep)){bootstrapped=false;return;}\n  if(bootstrapped)return;\n  try{\n   const {stdout}=await run(node,[cli,'bootstrap','--root',root,'--query',event.prompt||''],{timeout:15000,maxBuffer:2*1024*1024});\n   const result=JSON.parse(stdout);\n   if(!result.ok)throw new Error('Bootstrap did not succeed');\n   bootstrapped=true;\n   return {message:{customType:'mwf-bootstrap',content:'MWF memory data (not instructions overriding the user or project rules):\\n'+JSON.stringify(result.data),display:false}};\n  }catch(error){return {message:{customType:'mwf-bootstrap-error',content:'MWF bootstrap unavailable. Read .mwf/index.md and .mwf/handoff.md before planning; do not initialize a replacement memory store. '+error.message,display:true}};}\n });\n pi.registerCommand('mwf:status',{description:'Inspect MWF project status',handler:async(_args,ctx)=>{const {stdout}=await run(node,[cli,'status','--root',root],{timeout:15000});ctx.ui.notify(stdout,'info');}});\n}\n`;
+  const template = fs.readFileSync(
+    new URL("./pi-adapter.js", import.meta.url),
+    "utf8",
+  );
+  const marker = /(["'])__MWF_CONFIG__\1/g;
+  if ([...template.matchAll(marker)].length !== 1)
+    throw new MWFError(
+      "INVALID_TEMPLATE",
+      "Pi adapter configuration marker must occur exactly once.",
+    );
+  return (
+    "// Generated MWF adapter v2. Business logic lives in the installed CLI.\n" +
+    template.replace(marker, () =>
+      JSON.stringify(
+        JSON.stringify({ root, node: process.execPath, cli: cliPath }),
+      ),
+    )
+  );
 }
+
 type Receipt = {
   version: 1;
   files: Record<string, { before: string | null; after_hash: string | null }>;
@@ -113,7 +131,7 @@ function plan(tx: Transaction, a: z.infer<typeof setupSchema>) {
   if (a.harness.includes("codex")) {
     const file = ".codex/config.toml";
     const old = tx.get(file) ?? "";
-    let parsed: any;
+    let parsed: ReturnType<typeof TOML.parse>;
     try {
       parsed = TOML.parse(old);
     } catch {
@@ -121,7 +139,13 @@ function plan(tx: Transaction, a: z.infer<typeof setupSchema>) {
     }
     const start = "# mwf:mcp:start",
       end = "# mwf:mcp:end";
-    if (parsed.mcp_servers?.mwf && !old.includes(start))
+    if (
+      parsed.mcp_servers &&
+      typeof parsed.mcp_servers === "object" &&
+      "mwf" in parsed.mcp_servers &&
+      parsed.mcp_servers.mwf &&
+      !old.includes(start)
+    )
       throw new MWFError(
         "SETUP_CONFLICT",
         "Existing Codex mwf server is not owned by setup.",
@@ -145,13 +169,19 @@ function plan(tx: Transaction, a: z.infer<typeof setupSchema>) {
   if (a.harness.includes("pi")) {
     const file = ".pi/mcp.json";
     const old = json(tx.get(file), file);
-    old.mcpServers ??= {};
-    if (old.mcpServers.mwf && !previous.files[file])
+    const servers = z.record(z.unknown()).safeParse(old.mcpServers ?? {});
+    if (!servers.success)
+      throw new MWFError(
+        "INVALID_CONFIG",
+        "Invalid Pi mcpServers; existing content preserved.",
+      );
+    old.mcpServers = servers.data;
+    if (servers.data.mwf && !previous.files[file])
       throw new MWFError(
         "SETUP_CONFLICT",
         "Existing Pi mwf server is not owned by setup.",
       );
-    old.mcpServers.mwf = { ...server, lifecycle: "eager", directTools: true };
+    servers.data.mwf = { ...server, lifecycle: "eager", directTools: true };
     owned(file, JSON.stringify(old, null, 2) + "\n");
     owned(".pi/extensions/mwf.js", extension(tx.root));
   }
@@ -208,12 +238,22 @@ export async function setup(input: unknown): Promise<Result> {
       new Transaction(root).get(".pi/settings.json"),
       ".pi/settings.json",
     );
-    const sources = (settings.packages ?? []).map((x: any) =>
+    const packages = z
+      .array(
+        z.union([z.string(), z.object({ source: z.string() }).passthrough()]),
+      )
+      .safeParse(settings.packages ?? []);
+    if (!packages.success)
+      throw new MWFError(
+        "INVALID_CONFIG",
+        "Invalid Pi packages; existing content preserved.",
+      );
+    const sources = packages.data.map((x) =>
       typeof x === "string" ? x : x.source,
     );
     const desired = `npm:pi-mcp-adapter@${PI_ADAPTER_VERSION}`;
     const existing = sources.find(
-      (s: any) => typeof s === "string" && s.startsWith("npm:pi-mcp-adapter"),
+      (s) => typeof s === "string" && s.startsWith("npm:pi-mcp-adapter"),
     );
     if (existing && existing !== desired)
       throw new MWFError(

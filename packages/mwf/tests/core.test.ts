@@ -5,7 +5,10 @@ import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { execute } from "../dist/core.js";
+import { execute as rawExecute } from "../dist/core.js";
+import { execute, setupData, previewData } from "./contracts.ts";
+import type { TestContext } from "node:test";
+import { z } from "zod";
 import { setup, detach } from "../dist/setup.js";
 import { Transaction, withProjectLock } from "../dist/storage.js";
 const cli = fileURLToPath(new URL("../dist/cli.js", import.meta.url));
@@ -13,21 +16,21 @@ const core = fileURLToPath(new URL("../dist/core.js", import.meta.url));
 const legacyFixture = fileURLToPath(
   new URL("./fixtures/legacy-schema-1/", import.meta.url),
 );
-function legacyProject(t) {
+function legacyProject(t: TestContext) {
   const root = temp(t);
   fs.cpSync(path.join(legacyFixture, "project"), root, { recursive: true });
   return root;
 }
-const temp = (t) => {
+const temp = (t: TestContext) => {
   const p = fs.realpathSync(
     fs.mkdtempSync(path.join(os.tmpdir(), "mwf-test-")),
   );
   t.after(() => fs.rmSync(p, { recursive: true, force: true }));
   return p;
 };
-const init = (root) =>
+const init = (root: string) =>
   execute("init", { project_root: root, git_mode: "track" });
-const add = (root, overrides = {}) =>
+const add = (root: string, overrides: Record<string, unknown> = {}) =>
   execute("add", {
     project_root: root,
     type: "preference",
@@ -36,8 +39,13 @@ const add = (root, overrides = {}) =>
     body: "## Guidance\n\nUse clear names.",
     ...overrides,
   });
-function child(args) {
-  return new Promise((resolve) => {
+function child(args: string[]) {
+  return new Promise<{
+    code: number | null;
+    signal: NodeJS.Signals | null;
+    out: string;
+    err: string;
+  }>((resolve) => {
     const p = spawn(process.execPath, args, {
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -127,6 +135,7 @@ test("record recall preserves scoped incident boundaries and candidates are mark
     operation: ["conversion"],
   }).data;
   assert.equal(matches[0].id, incident.data.id);
+  assert.ok(matches[0].incident_boundaries);
   assert.match(
     matches[0].incident_boundaries.applicability,
     /Pandoc remains valid/,
@@ -391,6 +400,7 @@ test("migration keeps recoverable backup and forget clears MWF-owned snapshots",
     git_mode: "track",
     apply: true,
   });
+  assert.ok(result.data.backup);
   assert.ok(fs.existsSync(path.join(root, result.data.backup)));
   execute("forget", { project_root: root, id: a.data.id, apply: true });
   assert.equal(fs.existsSync(path.join(root, result.data.backup)), false);
@@ -404,10 +414,10 @@ test("Codex setup installs rules/config, verifies real MCP and detaches safely",
   );
   const input = { project_root: root, git_mode: "track", harness: ["codex"] };
   const preview = await setup({ ...input, dry_run: true });
-  assert.equal(preview.data.preview, true);
+  assert.equal(setupData.parse(preview.data).preview, true);
   assert.equal(fs.existsSync(path.join(root, ".mwf")), false);
   const result = await setup(input);
-  assert.equal(result.data.mcp.bootstrap_verified, true);
+  assert.equal(setupData.parse(result.data).mcp?.bootstrap_verified, true);
   assert.match(
     fs.readFileSync(path.join(root, ".codex/config.toml"), "utf8"),
     /User comment/,
@@ -417,7 +427,7 @@ test("Codex setup installs rules/config, verifies real MCP and detaches safely",
     fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"),
     /bootstrap v2/,
   );
-  assert.ok(detach(root).data.preview);
+  assert.ok(previewData.parse(detach(root).data).preview);
   detach(root, true);
   assert.equal(
     fs.readFileSync(path.join(root, ".codex/config.toml"), "utf8"),
@@ -559,10 +569,19 @@ test("retrying a forgotten add cannot resurrect it or expose its old title", (t)
     apply: true,
     request_id: "forget-once",
   });
-  const replay = add(root, args);
+  const replay = rawExecute("add", {
+    project_root: root,
+    type: "preference",
+    summary: "Keep names clear",
+    body: "## Guidance\n\nUse clear names.",
+    ...args,
+  });
   assert.equal(replay.replayed, true);
   assert.equal(replay.ok, false);
-  assert.equal(replay.data.forgotten, true);
+  assert.equal(
+    z.object({ forgotten: z.literal(true) }).parse(replay.data).forgotten,
+    true,
+  );
   assert.doesNotMatch(JSON.stringify(replay), /Private subject name/);
   assert.equal(fs.existsSync(path.join(root, first.data.path)), false);
 });

@@ -19,12 +19,13 @@
     "node": ">=22.16.0"
   },
   "scripts": {
-    "build": "tsc && node scripts/build.mjs",
-    "test": "npm run build && node --test tests/*.test.mjs",
+    "build": "tsc && node --experimental-strip-types scripts/build.ts",
+    "test": "npm run typecheck && node --experimental-strip-types --test tests/*.test.ts",
     "prepack": "npm run build",
-    "test:package": "npm run build && node scripts/check-package.mjs",
-    "test:pi": "node scripts/check-pi.mjs",
-    "format:check": "prettier --check src tests scripts package.json tsconfig.json"
+    "test:package": "npm run build && node --experimental-strip-types scripts/check-package.ts",
+    "test:pi": "node --experimental-strip-types scripts/check-pi.ts",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\" package.json \"tsconfig*.json\"",
+    "typecheck": "npm run build && tsc -p tsconfig.tools.json"
   },
   "dependencies": {
     "@iarna/toml": "2.2.5",
